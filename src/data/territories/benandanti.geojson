@@ -1,0 +1,63 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "note": "Friuli region, northeastern Italy \u2014 heartland of the benandanti",
+        "entity": "benandanti"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              12.5,
+              46.5
+            ],
+            [
+              13.1,
+              46.6
+            ],
+            [
+              13.8,
+              46.52
+            ],
+            [
+              14.2,
+              46.45
+            ],
+            [
+              14.5,
+              46.2
+            ],
+            [
+              14.0,
+              45.75
+            ],
+            [
+              13.5,
+              45.6
+            ],
+            [
+              13.0,
+              45.7
+            ],
+            [
+              12.35,
+              45.9
+            ],
+            [
+              12.2,
+              46.2
+            ],
+            [
+              12.5,
+              46.5
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

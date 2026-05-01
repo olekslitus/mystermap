@@ -22,6 +22,13 @@ const pageTitle = title === 'MysterMap' ? title : `${title} · MysterMap`;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" />
   <title>{pageTitle}</title>
+  <script is:inline>
+    (function () {
+      var saved = localStorage.getItem('mm-theme');
+      var preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.dataset.theme = saved || preferred;
+    })();
+  </script>
 </head>
 <body class={fullBleed ? 'full-bleed' : ''}>
   <header class="site-header">
@@ -30,9 +37,28 @@ const pageTitle = title === 'MysterMap' ? title : `${title} · MysterMap`;
       <a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/about/`}>About</a>
       <a href="https://github.com/" rel="noopener">Contribute</a>
     </nav>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to light mode">☀</button>
   </header>
   <main>
     <slot />
   </main>
+  <script>
+    const toggle = document.getElementById('theme-toggle') as HTMLButtonElement;
+
+    function syncToggle() {
+      const isLight = document.documentElement.dataset.theme === 'light';
+      toggle.textContent = isLight ? '🌙' : '☀';
+      toggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+    }
+
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('mm-theme', next);
+      syncToggle();
+    });
+
+    syncToggle();
+  </script>
 </body>
 </html>

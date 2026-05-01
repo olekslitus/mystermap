@@ -1,0 +1,59 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "note": "Florence and the Arno valley \u2014 site of the 1954 mass UFO sighting",
+        "entity": "florence-stadium-ufo"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.05,
+              43.9
+            ],
+            [
+              11.2,
+              43.93
+            ],
+            [
+              11.4,
+              43.85
+            ],
+            [
+              11.5,
+              43.75
+            ],
+            [
+              11.45,
+              43.62
+            ],
+            [
+              11.25,
+              43.55
+            ],
+            [
+              11.05,
+              43.58
+            ],
+            [
+              10.9,
+              43.68
+            ],
+            [
+              10.95,
+              43.82
+            ],
+            [
+              11.05,
+              43.9
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

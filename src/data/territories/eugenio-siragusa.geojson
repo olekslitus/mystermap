@@ -1,0 +1,59 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "note": "Mount Etna and eastern Sicily \u2014 Siragusa contactee territory",
+        "entity": "eugenio-siragusa"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              14.75,
+              37.9
+            ],
+            [
+              14.9,
+              37.95
+            ],
+            [
+              15.15,
+              37.9
+            ],
+            [
+              15.35,
+              37.8
+            ],
+            [
+              15.3,
+              37.55
+            ],
+            [
+              15.1,
+              37.4
+            ],
+            [
+              14.8,
+              37.35
+            ],
+            [
+              14.55,
+              37.5
+            ],
+            [
+              14.6,
+              37.7
+            ],
+            [
+              14.75,
+              37.9
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "note": "Torriglia and the Ligurian hills above Genoa \u2014 Zanfretta abduction zone",
+        "entity": "zanfretta-abduction"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.9,
+              44.55
+            ],
+            [
+              9.0,
+              44.62
+            ],
+            [
+              9.2,
+              44.6
+            ],
+            [
+              9.35,
+              44.52
+            ],
+            [
+              9.3,
+              44.4
+            ],
+            [
+              9.2,
+              44.35
+            ],
+            [
+              9.05,
+              44.38
+            ],
+            [
+              8.95,
+              44.45
+            ],
+            [
+              8.9,
+              44.55
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

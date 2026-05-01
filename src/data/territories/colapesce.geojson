@@ -1,0 +1,59 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "note": "Strait of Messina and surrounding Sicilian coast",
+        "entity": "colapesce"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              15.45,
+              38.3
+            ],
+            [
+              15.55,
+              38.35
+            ],
+            [
+              15.68,
+              38.25
+            ],
+            [
+              15.72,
+              38.15
+            ],
+            [
+              15.65,
+              37.95
+            ],
+            [
+              15.52,
+              37.85
+            ],
+            [
+              15.38,
+              37.9
+            ],
+            [
+              15.32,
+              38.05
+            ],
+            [
+              15.35,
+              38.2
+            ],
+            [
+              15.45,
+              38.3
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

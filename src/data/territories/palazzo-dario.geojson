@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "note": "Palazzo Dario on the Grand Canal, Venice",
+        "entity": "palazzo-dario"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              12.334,
+              45.434
+            ],
+            [
+              12.336,
+              45.4349
+            ],
+            [
+              12.3395,
+              45.4348
+            ],
+            [
+              12.3415,
+              45.4335
+            ],
+            [
+              12.3408,
+              45.432
+            ],
+            [
+              12.3385,
+              45.431
+            ],
+            [
+              12.3358,
+              45.4313
+            ],
+            [
+              12.334,
+              45.4325
+            ],
+            [
+              12.334,
+              45.434
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
