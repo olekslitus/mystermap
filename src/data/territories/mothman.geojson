@@ -1,0 +1,81 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "mothman",
+        "firstYear": 1966,
+        "lastYear": null,
+        "note": "Sightings centered on the abandoned WWII-era TNT area near Point Pleasant, West Virginia."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.939,
+              38.85
+            ],
+            [
+              -81.9554,
+              38.9381
+            ],
+            [
+              -82.0017,
+              39.0148
+            ],
+            [
+              -82.0781,
+              39.0538
+            ],
+            [
+              -82.1671,
+              39.0792
+            ],
+            [
+              -82.2344,
+              39.0093
+            ],
+            [
+              -82.2481,
+              38.9186
+            ],
+            [
+              -82.3027,
+              38.85
+            ],
+            [
+              -82.2909,
+              38.7585
+            ],
+            [
+              -82.2294,
+              38.6975
+            ],
+            [
+              -82.1597,
+              38.657
+            ],
+            [
+              -82.0731,
+              38.6215
+            ],
+            [
+              -82.0123,
+              38.6999
+            ],
+            [
+              -81.944,
+              38.7558
+            ],
+            [
+              -81.939,
+              38.85
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

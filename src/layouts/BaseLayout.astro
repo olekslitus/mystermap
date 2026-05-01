@@ -1,0 +1,38 @@
+---
+import '~/styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  fullBleed?: boolean;
+}
+
+const { title, description = "Map of the United States, controlled by supernatural forces.", fullBleed = false } = Astro.props;
+
+const pageTitle = title === 'MysterMap' ? title : `${title} · MysterMap`;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content={description} />
+  <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" />
+  <title>{pageTitle}</title>
+</head>
+<body class={fullBleed ? 'full-bleed' : ''}>
+  <header class="site-header">
+    <a class="site-title" href={import.meta.env.BASE_URL}>MysterMap</a>
+    <nav class="site-nav">
+      <a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/about/`}>About</a>
+      <a href="https://github.com/" rel="noopener">Contribute</a>
+    </nav>
+  </header>
+  <main>
+    <slot />
+  </main>
+</body>
+</html>

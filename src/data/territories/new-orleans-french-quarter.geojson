@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "new-orleans-french-quarter",
+        "firstYear": 1814,
+        "lastYear": null,
+        "note": "Voodoo lore, vampires, and ghost stories long entwined with the French Quarter of New Orleans."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.0416,
+              29.958
+            ],
+            [
+              -90.0452,
+              29.9667
+            ],
+            [
+              -90.0577,
+              29.9704
+            ],
+            [
+              -90.0706,
+              29.971
+            ],
+            [
+              -90.0806,
+              29.9657
+            ],
+            [
+              -90.0871,
+              29.958
+            ],
+            [
+              -90.0816,
+              29.9498
+            ],
+            [
+              -90.0711,
+              29.9441
+            ],
+            [
+              -90.0576,
+              29.9454
+            ],
+            [
+              -90.0468,
+              29.95
+            ],
+            [
+              -90.0416,
+              29.958
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

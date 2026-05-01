@@ -1,0 +1,77 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "beast-of-bray-road",
+        "firstYear": 1936,
+        "lastYear": null,
+        "note": "Reported on rural roads near Elkhorn, Wisconsin, often described as a wolflike upright creature."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -88.3105,
+              42.67
+            ],
+            [
+              -88.3851,
+              42.7487
+            ],
+            [
+              -88.4231,
+              42.8372
+            ],
+            [
+              -88.5279,
+              42.8353
+            ],
+            [
+              -88.6119,
+              42.8185
+            ],
+            [
+              -88.7361,
+              42.8199
+            ],
+            [
+              -88.7403,
+              42.7126
+            ],
+            [
+              -88.7686,
+              42.621
+            ],
+            [
+              -88.6946,
+              42.5535
+            ],
+            [
+              -88.6352,
+              42.4659
+            ],
+            [
+              -88.5195,
+              42.442
+            ],
+            [
+              -88.4372,
+              42.5215
+            ],
+            [
+              -88.3809,
+              42.5893
+            ],
+            [
+              -88.3105,
+              42.67
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

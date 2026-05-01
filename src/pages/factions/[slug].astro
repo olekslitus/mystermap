@@ -1,0 +1,87 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const factions = await getCollection('factions');
+  const entities = await getCollection('entities', ({ data }) => !data.draft);
+  return factions.map((faction) => ({
+    params: { slug: faction.data.slug },
+    props: {
+      faction,
+      members: entities
+        .filter((e) => e.data.faction.id === faction.id)
+        .sort((a, b) => a.data.firstAppearance - b.data.firstAppearance),
+    },
+  }));
+}
+
+const { faction, members } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<BaseLayout title={faction.data.name} description={`The ${faction.data.name} faction across the United States.`}>
+  <article class="page prose">
+    <a href={import.meta.env.BASE_URL} class="back-link">← back to map</a>
+    <header style={`--faction-color:${faction.data.color}`}>
+      <span class="faction-badge">
+        <span class="icon">{faction.data.icon}</span>
+        {faction.data.name}
+      </span>
+      <h1>{faction.data.name}</h1>
+      <p class="muted">{members.length} {members.length === 1 ? 'entry' : 'entries'} on the map.</p>
+    </header>
+    <p>{faction.data.description}</p>
+
+    <h2>Members</h2>
+    <ul class="member-list">
+      {members.map((m) => (
+        <li>
+          <a href={`${baseUrl}/entities/${m.id}/`}>
+            <span class="year">{m.data.firstAppearanceFuzzy ? '~' : ''}{m.data.firstAppearance}</span>
+            <span class="name">{m.data.name}</span>
+            <span class="loc muted">{m.data.locations[0]}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </article>
+</BaseLayout>
+
+<style>
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    color: var(--fg-dim);
+    font-size: 0.9rem;
+  }
+  .faction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.2em 0.7em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--faction-color) 20%, transparent);
+    border: 1px solid var(--faction-color);
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  .member-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--border);
+  }
+  .member-list a {
+    display: grid;
+    grid-template-columns: 5rem 1fr auto;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--fg);
+    text-decoration: none;
+    align-items: baseline;
+  }
+  .member-list a:hover .name { color: var(--accent); }
+  .year { color: var(--fg-dim); font-variant-numeric: tabular-nums; }
+  .loc { font-size: 0.9rem; }
+</style>

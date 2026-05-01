@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "flatwoods-monster",
+        "firstYear": 1952,
+        "lastYear": 1952,
+        "note": "A single 1952 sighting on a hillside near Flatwoods, West Virginia."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.4747,
+              38.72
+            ],
+            [
+              -80.4999,
+              38.8067
+            ],
+            [
+              -80.5595,
+              38.8767
+            ],
+            [
+              -80.65,
+              38.8868
+            ],
+            [
+              -80.7262,
+              38.8521
+            ],
+            [
+              -80.8001,
+              38.8066
+            ],
+            [
+              -80.8455,
+              38.72
+            ],
+            [
+              -80.7677,
+              38.652
+            ],
+            [
+              -80.7596,
+              38.5302
+            ],
+            [
+              -80.65,
+              38.5062
+            ],
+            [
+              -80.5662,
+              38.5749
+            ],
+            [
+              -80.5282,
+              38.6497
+            ],
+            [
+              -80.4747,
+              38.72
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

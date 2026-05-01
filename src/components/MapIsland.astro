@@ -1,0 +1,829 @@
+---
+import type { MapData } from '~/lib/loadMapData';
+
+interface Props {
+  data: MapData;
+}
+
+const { data } = Astro.props;
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const initialYear = data.yearRange.max;
+---
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<div class="map-shell">
+  <div class="filter-rail" id="filter-rail">
+    <button class="chip chip-all is-on" data-faction="*" type="button" aria-pressed="true">
+      <span class="chip-icon">✦</span>
+      <span class="chip-label">All</span>
+      <span class="chip-count">{data.entities.length}</span>
+    </button>
+    {data.factions.map((f) => (
+      <button
+        class="chip is-on"
+        data-faction={f.slug}
+        type="button"
+        aria-pressed="true"
+        style={`--chip-color:${f.color}`}
+      >
+        <span class="chip-icon">{f.icon}</span>
+        <span class="chip-label">{f.name}</span>
+        <span class="chip-count">{f.count}</span>
+      </button>
+    ))}
+  </div>
+
+  <div id="map" class="map"></div>
+
+  <div class="time-controls">
+    <button id="play-button" class="play-button" type="button" aria-label="Play through time">▶</button>
+    <div class="slider-wrap">
+      <label for="year-slider" class="slider-label">
+        <span id="year-display">{initialYear}</span>
+      </label>
+      <input
+        id="year-slider"
+        type="range"
+        min={data.yearRange.min}
+        max={data.yearRange.max}
+        value={initialYear}
+        step="1"
+        aria-label="Year"
+      />
+      <div class="slider-bounds">
+        <span>{data.yearRange.min}</span>
+        <span>{data.yearRange.max}</span>
+      </div>
+    </div>
+  </div>
+
+  <aside id="entity-panel" class="entity-panel" aria-hidden="true">
+    <button id="panel-close" class="panel-close" type="button" aria-label="Close">×</button>
+    <div id="panel-body"></div>
+  </aside>
+</div>
+
+<script is:inline define:vars={{ mapData: data, baseUrl }}>
+  // Inject the build-time data into the global scope so the processed
+  // module script below can read it. is:inline is intentional — this
+  // script is just a data shuttle, not bundled code.
+  window.__MYSTERMAP__ = { mapData, baseUrl };
+</script>
+
+<script>
+  import L from 'leaflet';
+  import type { MapData, MapEntity, MapSighting, MapPlace } from '~/lib/loadMapData';
+
+  type Layer = L.GeoJSON & { _entitySlug?: string };
+
+  const W = window as unknown as { __MYSTERMAP__: { mapData: MapData; baseUrl: string } };
+  const { mapData } = W.__MYSTERMAP__;
+
+  const state = {
+    year: mapData.yearRange.max,
+    enabled: new Set(mapData.factions.map((f) => f.slug)),
+  };
+
+  const map = L.map('map', {
+    center: [39.5, -98.35],
+    zoom: 4,
+    minZoom: 3,
+    maxZoom: 11,
+    zoomControl: true,
+    worldCopyJump: false,
+    attributionControl: true,
+  });
+
+  // Carto "Dark Matter" basemap — free, no API key required, dark/atmospheric
+  // styling that suits the supernatural theme. (Swap to Stadia Stamen Watercolor
+  // by setting STADIA_API_KEY env var; see README for the alternate tile URL.)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    minZoom: 1,
+    maxZoom: 18,
+    subdomains: 'abcd',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank">Carto</a>',
+  }).addTo(map);
+
+  // Build a Leaflet layer per entity so we can toggle visibility individually.
+  const entityLayers = new Map<string, Layer>();
+  const sightingLayers = new Map<string, L.LayerGroup>();
+  const entitiesBySlug = new Map(mapData.entities.map((e) => [e.slug, e]));
+
+  for (const entity of mapData.entities) {
+    const tooltipHtml = renderTooltip(entity);
+
+    const layer = L.geoJSON(entity.geojson, {
+      style: () => baseStyle(entity),
+      pointToLayer: (_, latlng) =>
+        L.circleMarker(latlng, { radius: 14, ...baseStyle(entity) }),
+      onEachFeature: (_feature, lyr) => {
+        lyr.on('click', () => openPanel(entity));
+        lyr.on('mouseover', (e) => {
+          (e.target as L.Path).setStyle({ weight: 3, fillOpacity: 0.5 });
+        });
+        lyr.on('mouseout', (e) => {
+          (e.target as L.Path).setStyle({ weight: 2, fillOpacity: 0.32 });
+        });
+        lyr.bindTooltip(tooltipHtml, {
+          sticky: true,
+          direction: 'top',
+          opacity: 1,
+          className: 'mm-tooltip',
+        });
+      },
+    }) as Layer;
+    layer._entitySlug = entity.slug;
+    layer.addTo(map);
+    entityLayers.set(entity.slug, layer);
+
+    // ── sighting points ──
+    if (entity.sightings.length > 0) {
+      const group = L.layerGroup();
+      for (const s of entity.sightings) {
+        const marker = L.circleMarker([s.lat, s.lon], {
+          radius: 4,
+          color: entity.faction.color,
+          weight: 2,
+          opacity: 0.95,
+          fillColor: '#fff',
+          fillOpacity: 0.9,
+          pane: 'markerPane',
+        });
+        marker.bindTooltip(renderSightingTooltip(entity, s), {
+          direction: 'top',
+          offset: [0, -6],
+          opacity: 1,
+          className: 'mm-tooltip mm-tooltip-sighting',
+        });
+        marker.on('click', (ev) => {
+          L.DomEvent.stopPropagation(ev);
+          openSightingPopup(entity, s, marker);
+        });
+        marker.addTo(group);
+      }
+      group.addTo(map);
+      sightingLayers.set(entity.slug, group);
+    }
+  }
+
+  // ─── Places (significant landmarks: mountains, churches, sites…) ──────
+  const PLACE_ICONS: Record<string, string> = {
+    mountain: '⛰️', church: '⛪', cemetery: '🪦', cave: '🕳️', site: '🗿',
+    vortex: '🌀', monument: '🗽', house: '🏚️', lighthouse: '🗼',
+    forest: '🌲', lake: '💧', other: '📍',
+  };
+
+  const placeLayer = L.layerGroup();
+  for (const place of mapData.places) {
+    const icon = L.divIcon({
+      className: 'mm-place-icon',
+      html: `<span class="mm-place-glyph" title="${escapeHtml(place.name)}">${escapeHtml(PLACE_ICONS[place.type] ?? '📍')}</span>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    });
+    const marker = L.marker([place.lat, place.lon], { icon, riseOnHover: true });
+    marker.bindTooltip(renderPlaceTooltip(place), {
+      direction: 'top',
+      offset: [0, -10],
+      opacity: 1,
+      className: 'mm-tooltip mm-tooltip-place',
+    });
+    marker.on('click', () => openPlacePopup(place, marker));
+    marker.addTo(placeLayer);
+  }
+  placeLayer.addTo(map);
+
+  function renderPlaceTooltip(p: MapPlace): string {
+    const icon = PLACE_ICONS[p.type] ?? '📍';
+    const established = p.established !== null
+      ? ` · ${p.established < 0 ? Math.abs(p.established) + ' BCE' : p.established}`
+      : '';
+    return `
+      <div class="t-head t-place-head">
+        <span class="t-icon">${escapeHtml(icon)}</span>
+        <span class="t-name">${escapeHtml(p.name)}</span>
+        <span class="t-year">${escapeHtml(p.type)}${escapeHtml(established)}</span>
+      </div>
+      <div class="t-line">${escapeHtml(p.significance)}</div>
+      <div class="t-meta">${escapeHtml(p.locations.join(' · '))}</div>
+    `;
+  }
+
+  function openPlacePopup(p: MapPlace, marker: L.Marker) {
+    const icon = PLACE_ICONS[p.type] ?? '📍';
+    const popup = L.popup({ className: 'mm-popup mm-popup-place', maxWidth: 340 })
+      .setLatLng(marker.getLatLng())
+      .setContent(`
+        <div class="p-head">
+          <strong>${escapeHtml(icon)} ${escapeHtml(p.name)}</strong>
+        </div>
+        <p class="muted small" style="text-transform:capitalize">${escapeHtml(p.type)}${p.established !== null ? ' · est. ' + (p.established < 0 ? Math.abs(p.established) + ' BCE' : p.established) : ''}</p>
+        <p>${escapeHtml(p.significance)}</p>
+        <a class="p-source" href="${escapeHtml(p.href)}">Read more →</a>
+      `);
+    popup.openOn(map);
+  }
+
+  function renderTooltip(e: MapEntity): string {
+    const yearLabel = e.firstAppearanceFuzzy
+      ? `~${Math.floor(e.firstAppearance / 10) * 10}s`
+      : String(e.firstAppearance);
+    const tagline = e.tagline ? `<div class="t-line">${escapeHtml(e.tagline)}</div>` : '';
+    return `
+      <div class="t-head" style="--faction-color:${escapeHtml(e.faction.color)}">
+        <span class="t-icon">${escapeHtml(e.faction.icon)}</span>
+        <span class="t-name">${escapeHtml(e.name)}</span>
+        <span class="t-year">${escapeHtml(yearLabel)}</span>
+      </div>
+      ${tagline}
+      <div class="t-meta">${escapeHtml(e.locations.join(' · '))}</div>
+    `;
+  }
+
+  function renderSightingTooltip(e: MapEntity, s: MapSighting): string {
+    const yr = s.year ? String(s.year) : (s.date ?? '');
+    return `
+      <div class="t-head s-head" style="--faction-color:${escapeHtml(e.faction.color)}">
+        <span class="t-name">${escapeHtml(e.name)} sighting</span>
+        ${yr ? `<span class="t-year">${escapeHtml(yr)}</span>` : ''}
+      </div>
+      <div class="t-line">${escapeHtml(truncate(s.description, 110))}</div>
+      <div class="t-meta">${escapeHtml(s.location)} · ${escapeHtml(s.sourceType)}</div>
+    `;
+  }
+
+  function openSightingPopup(e: MapEntity, s: MapSighting, marker: L.CircleMarker) {
+    const yr = s.year ? String(s.year) : (s.date ?? 'date unknown');
+    const popup = L.popup({ className: 'mm-popup', maxWidth: 320 })
+      .setLatLng(marker.getLatLng())
+      .setContent(`
+        <div class="p-head" style="--faction-color:${escapeHtml(e.faction.color)}">
+          <strong>${escapeHtml(e.name)}</strong> · ${escapeHtml(yr)}
+        </div>
+        <p>${escapeHtml(s.description)}</p>
+        <p class="muted small">${escapeHtml(s.location)}</p>
+        <a class="p-source" href="${escapeHtml(s.sourceUrl)}" target="_blank" rel="noopener">
+          ${escapeHtml(s.sourceTitle)} (${escapeHtml(s.sourceType)}) →
+        </a>
+      `);
+    popup.openOn(map);
+  }
+
+  function truncate(s: string, n: number): string {
+    return s.length <= n ? s : s.slice(0, n - 1).trimEnd() + '…';
+  }
+
+  function baseStyle(e: MapEntity): L.PathOptions {
+    return {
+      color: e.faction.color,
+      weight: 2,
+      opacity: 0.85,
+      fillColor: e.faction.color,
+      fillOpacity: 0.32,
+    };
+  }
+
+  function isVisible(e: MapEntity): boolean {
+    if (!state.enabled.has(e.faction.slug)) return false;
+    if (e.firstAppearance > state.year) return false;
+    if (e.lastAppearance !== null && e.lastAppearance < state.year) return false;
+    return true;
+  }
+
+  function applyVisibility() {
+    for (const entity of mapData.entities) {
+      const layer = entityLayers.get(entity.slug);
+      if (!layer) continue;
+      const visible = isVisible(entity);
+      layer.setStyle({
+        opacity: visible ? 0.85 : 0,
+        fillOpacity: visible ? 0.32 : 0,
+      });
+      // Hidden layers should not capture pointer events.
+      layer.eachLayer((sub) => {
+        const el = (sub as L.Path).getElement?.();
+        if (el) (el as HTMLElement).style.pointerEvents = visible ? 'auto' : 'none';
+      });
+
+      // Sighting markers: filter individually by year + faction visibility.
+      const group = sightingLayers.get(entity.slug);
+      if (group) {
+        let i = 0;
+        group.eachLayer((sub) => {
+          const sighting = entity.sightings[i++];
+          const sVisible =
+            visible &&
+            (sighting.year === null || sighting.year <= state.year);
+          const el = (sub as L.CircleMarker).getElement?.();
+          if (el) {
+            (el as HTMLElement).style.opacity = sVisible ? '1' : '0';
+            (el as HTMLElement).style.pointerEvents = sVisible ? 'auto' : 'none';
+          }
+        });
+      }
+    }
+  }
+
+  // ─── Year slider ────────────────────────────────────────────────────────
+  const slider = document.getElementById('year-slider') as HTMLInputElement;
+  const yearDisplay = document.getElementById('year-display')!;
+  slider.addEventListener('input', () => {
+    state.year = parseInt(slider.value, 10);
+    yearDisplay.textContent = String(state.year);
+    applyVisibility();
+  });
+
+  // ─── Play button ───────────────────────────────────────────────────────
+  const playBtn = document.getElementById('play-button') as HTMLButtonElement;
+  let playTimer: number | null = null;
+  function stopPlay() {
+    if (playTimer !== null) {
+      window.clearInterval(playTimer);
+      playTimer = null;
+      playBtn.textContent = '▶';
+      playBtn.setAttribute('aria-label', 'Play through time');
+    }
+  }
+  playBtn.addEventListener('click', () => {
+    if (playTimer !== null) {
+      stopPlay();
+      return;
+    }
+    playBtn.textContent = '⏸';
+    playBtn.setAttribute('aria-label', 'Pause');
+    if (parseInt(slider.value, 10) >= mapData.yearRange.max) {
+      slider.value = String(mapData.yearRange.min);
+      slider.dispatchEvent(new Event('input'));
+    }
+    playTimer = window.setInterval(() => {
+      const v = parseInt(slider.value, 10);
+      if (v >= mapData.yearRange.max) {
+        stopPlay();
+        return;
+      }
+      slider.value = String(v + 1);
+      slider.dispatchEvent(new Event('input'));
+    }, 100);
+  });
+
+  // ─── Faction chips ─────────────────────────────────────────────────────
+  const rail = document.getElementById('filter-rail')!;
+  rail.addEventListener('click', (ev) => {
+    const target = (ev.target as HTMLElement).closest('button.chip') as HTMLButtonElement | null;
+    if (!target) return;
+    const faction = target.dataset.faction!;
+    if (faction === '*') {
+      // "All" toggles between all-on and last-state. Simpler: turn everything on.
+      state.enabled = new Set(mapData.factions.map((f) => f.slug));
+      for (const btn of rail.querySelectorAll<HTMLButtonElement>('button.chip')) {
+        btn.classList.add('is-on');
+        btn.setAttribute('aria-pressed', 'true');
+      }
+    } else {
+      const on = state.enabled.has(faction);
+      if (on) {
+        state.enabled.delete(faction);
+        target.classList.remove('is-on');
+        target.setAttribute('aria-pressed', 'false');
+      } else {
+        state.enabled.add(faction);
+        target.classList.add('is-on');
+        target.setAttribute('aria-pressed', 'true');
+      }
+      // Sync "All" chip state.
+      const allBtn = rail.querySelector<HTMLButtonElement>('button.chip-all')!;
+      const allOn = state.enabled.size === mapData.factions.length;
+      allBtn.classList.toggle('is-on', allOn);
+      allBtn.setAttribute('aria-pressed', String(allOn));
+    }
+    applyVisibility();
+  });
+
+  // ─── Side panel ────────────────────────────────────────────────────────
+  const panel = document.getElementById('entity-panel')!;
+  const panelBody = document.getElementById('panel-body')!;
+  document.getElementById('panel-close')!.addEventListener('click', closePanel);
+
+  function openPanel(entity: MapEntity) {
+    const yearLabel = entity.firstAppearanceFuzzy
+      ? `~${Math.floor(entity.firstAppearance / 10) * 10}s`
+      : String(entity.firstAppearance);
+    const heroSrc =
+      mapData.entities.find((e) => e.slug === entity.slug)?.geojson; // suppress unused
+    void heroSrc;
+    const fullEntity = entitiesBySlug.get(entity.slug)!;
+
+    panelBody.innerHTML = `
+      <span class="faction-badge" style="--faction-color:${escapeHtml(entity.faction.color)}">
+        <span class="icon">${escapeHtml(entity.faction.icon)}</span>
+        ${escapeHtml(entity.faction.name)}
+      </span>
+      <h2>${escapeHtml(entity.name)}</h2>
+      <p class="muted small">First seen <strong>${escapeHtml(yearLabel)}</strong> · ${escapeHtml(entity.locations.join(' · '))}</p>
+      <div class="panel-actions">
+        <a class="panel-cta" href="${escapeHtml(fullEntity.href)}">Read more →</a>
+      </div>
+    `;
+    panel.classList.add('is-open');
+    panel.setAttribute('aria-hidden', 'false');
+
+    // Pan the map gently to the territory's bounds.
+    const layer = entityLayers.get(entity.slug);
+    if (layer) {
+      try {
+        const bounds = layer.getBounds();
+        if (bounds.isValid()) map.flyToBounds(bounds, { padding: [80, 80], duration: 0.5, maxZoom: 7 });
+      } catch {
+        /* point markers without bounds */
+      }
+    }
+  }
+
+  function closePanel() {
+    panel.classList.remove('is-open');
+    panel.setAttribute('aria-hidden', 'true');
+  }
+
+  function escapeHtml(s: string): string {
+    return s.replace(/[&<>"']/g, (c) => {
+      switch (c) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#39;';
+        default: return c;
+      }
+    });
+  }
+
+  // ─── Keyboard shortcuts ────────────────────────────────────────────────
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') closePanel();
+    if ((ev.target as HTMLElement)?.tagName === 'INPUT') return;
+    if (ev.key === 'ArrowLeft') {
+      slider.value = String(Math.max(parseInt(slider.value, 10) - (ev.shiftKey ? 10 : 1), mapData.yearRange.min));
+      slider.dispatchEvent(new Event('input'));
+    }
+    if (ev.key === 'ArrowRight') {
+      slider.value = String(Math.min(parseInt(slider.value, 10) + (ev.shiftKey ? 10 : 1), mapData.yearRange.max));
+      slider.dispatchEvent(new Event('input'));
+    }
+  });
+
+  applyVisibility();
+</script>
+
+<style>
+  .map-shell {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .map {
+    position: absolute;
+    inset: 0;
+    background: #1d1d2a;
+  }
+
+  /* ─── Filter rail ──────────────────────────── */
+  .filter-rail {
+    position: absolute;
+    top: 4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.45rem 0.6rem;
+    background: rgba(26, 26, 36, 0.88);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    z-index: 500;
+    max-width: calc(100vw - 2rem);
+    overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+
+  .chip {
+    --chip-color: var(--fg-dim);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.35em 0.8em;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--fg-dim);
+    font-size: 0.85rem;
+    transition: background 120ms, color 120ms, border-color 120ms;
+    white-space: nowrap;
+  }
+  .chip:hover {
+    color: var(--fg);
+  }
+  .chip.is-on {
+    background: color-mix(in srgb, var(--chip-color) 18%, transparent);
+    border-color: var(--chip-color);
+    color: var(--fg);
+  }
+  .chip-all {
+    --chip-color: var(--accent);
+    font-weight: 600;
+  }
+  .chip-icon { font-size: 1em; line-height: 1; }
+  .chip-count {
+    font-size: 0.72rem;
+    padding: 0.05em 0.5em;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--fg-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── Time controls ───────────────────────── */
+  .time-controls {
+    position: absolute;
+    bottom: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 1rem;
+    background: rgba(26, 26, 36, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: min(560px, calc(100vw - 2rem));
+    z-index: 500;
+    box-shadow: var(--shadow);
+  }
+  .play-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--fg);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .play-button:hover {
+    background: var(--bg-elev-2);
+    border-color: var(--accent);
+  }
+  .slider-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .slider-label {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    color: var(--accent);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  #year-slider {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .slider-bounds {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--fg-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── Entity panel ──────────────────────────── */
+  .entity-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(420px, 100vw);
+    background: var(--bg-elev);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 220ms ease-out;
+    z-index: 600;
+    overflow-y: auto;
+    padding: 3rem 1.5rem 1.5rem;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.3);
+  }
+  .entity-panel.is-open {
+    transform: translateX(0);
+  }
+  .panel-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.8rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--fg-dim);
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  .panel-close:hover {
+    color: var(--fg);
+  }
+  .entity-panel .faction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.2em 0.7em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--faction-color) 22%, transparent);
+    border: 1px solid var(--faction-color);
+    color: var(--fg);
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  .entity-panel h2 {
+    font-family: var(--serif);
+    margin: 0 0 0.4rem;
+    font-size: 1.6rem;
+  }
+  .entity-panel .small { font-size: 0.85rem; margin: 0 0 1rem; }
+  .panel-actions { margin-top: 1rem; }
+  .panel-cta {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .panel-cta:hover { filter: brightness(1.1); text-decoration: none; }
+
+  /* ─── Mobile ───────────────────────────────── */
+  @media (max-width: 768px) {
+    .filter-rail { top: 3.5rem; font-size: 0.8rem; }
+    .entity-panel {
+      top: auto;
+      width: 100vw;
+      max-height: 60vh;
+      border-left: none;
+      border-top: 1px solid var(--border);
+      transform: translateY(100%);
+      border-radius: 16px 16px 0 0;
+    }
+    .entity-panel.is-open { transform: translateY(0); }
+    .time-controls { bottom: 0.6rem; }
+  }
+
+  /* Leaflet's default tooltip looks out of place; tone it down. */
+  :global(.leaflet-container) {
+    background: #1d1d2a;
+    font-family: var(--sans);
+  }
+  :global(.leaflet-control-attribution) {
+    background: rgba(26, 26, 36, 0.85) !important;
+    color: var(--fg-dim) !important;
+    font-size: 0.7rem;
+  }
+  :global(.leaflet-control-attribution a) { color: var(--accent) !important; }
+
+  /* ─── Hover tooltips ─────────────────────── */
+  :global(.mm-tooltip) {
+    background: rgba(20, 20, 28, 0.96) !important;
+    color: var(--fg) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    padding: 0.7rem 0.95rem !important;
+    font-family: var(--sans) !important;
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5) !important;
+    max-width: 360px !important;
+    min-width: 220px !important;
+    white-space: normal !important;
+  }
+  :global(.mm-tooltip::before) {
+    border-top-color: rgba(20, 20, 28, 0.96) !important;
+  }
+  :global(.mm-tooltip .t-head) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    border-bottom: 1px solid var(--faction-color, var(--border));
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.3rem;
+  }
+  :global(.mm-tooltip .t-icon) { font-size: 0.95rem; }
+  :global(.mm-tooltip .t-name) {
+    font-weight: 600;
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    color: var(--fg);
+    flex: 1;
+  }
+  :global(.mm-tooltip .t-year) {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.78rem;
+  }
+  :global(.mm-tooltip .t-line) { color: var(--fg); margin-bottom: 0.25rem; }
+  :global(.mm-tooltip .t-meta) { color: var(--fg-dim); font-size: 0.72rem; }
+  :global(.mm-tooltip-sighting) {
+    background: rgba(28, 28, 38, 0.96) !important;
+    border-style: dashed !important;
+  }
+
+  /* ─── Sighting popup (click) ─────────────── */
+  :global(.mm-popup .leaflet-popup-content-wrapper) {
+    background: var(--bg-elev) !important;
+    color: var(--fg) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    box-shadow: var(--shadow) !important;
+  }
+  :global(.mm-popup .leaflet-popup-tip) {
+    background: var(--bg-elev) !important;
+  }
+  :global(.mm-popup .leaflet-popup-content) {
+    margin: 0.8rem 1rem !important;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  :global(.mm-popup .p-head) {
+    border-bottom: 2px solid var(--faction-color, var(--border));
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.5rem;
+    font-family: var(--serif);
+    font-size: 1rem;
+  }
+  :global(.mm-popup p) { margin: 0.4rem 0; }
+  :global(.mm-popup .small) { font-size: 0.8rem; }
+  :global(.mm-popup .p-source) {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+  :global(.mm-popup .leaflet-popup-close-button) {
+    color: var(--fg-dim) !important;
+    font-size: 22px !important;
+    padding: 6px 10px 0 0 !important;
+  }
+
+  /* Sighting markers transition */
+  :global(.leaflet-marker-pane .leaflet-interactive) {
+    transition: opacity 200ms ease-out;
+  }
+
+  /* ─── Place markers ─────────────────────── */
+  :global(.mm-place-icon) {
+    background: transparent !important;
+    border: none !important;
+  }
+  :global(.mm-place-glyph) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(20, 20, 28, 0.85);
+    border: 1.5px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 120ms;
+  }
+  :global(.mm-place-glyph:hover) {
+    transform: scale(1.25);
+  }
+
+  /* Place-specific tooltip accent */
+  :global(.mm-tooltip-place) {
+    border-color: var(--accent) !important;
+  }
+  :global(.mm-tooltip-place .t-place-head) {
+    border-bottom-color: var(--accent) !important;
+  }
+  :global(.mm-tooltip-place .t-year) {
+    text-transform: capitalize;
+  }
+  :global(.mm-popup-place .p-head) {
+    border-bottom-color: var(--accent) !important;
+  }
+</style>

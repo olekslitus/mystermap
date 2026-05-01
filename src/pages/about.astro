@@ -1,0 +1,52 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { loadMapData } from '~/lib/loadMapData';
+
+const data = await loadMapData(import.meta.env.BASE_URL);
+const totalEntities = data.entities.length;
+const totalFactions = data.factions.length;
+---
+<BaseLayout title="About">
+  <article class="page prose">
+    <h1>About MysterMap</h1>
+    <p>
+      A field guide to the United States, drawn by people who believe
+      something else lives here too. {totalEntities} entities. {totalFactions} factions.
+      Centuries of sightings. One interactive map.
+    </p>
+
+    <h2>What you're looking at</h2>
+    <p>
+      Every shaded territory on the home page is somewhere that lore
+      says is — or was — under the sway of a supernatural faction. Click any
+      territory to read the story. Drag the time slider to watch the map fill
+      in across the centuries. Toggle factions to follow a single thread, like
+      witches from Salem 1692 onward.
+    </p>
+
+    <h2>How it's built</h2>
+    <p>
+      A static Astro site. No database, no accounts. Faction descriptions live
+      in YAML, entity profiles in Markdown, and territories in plain GeoJSON
+      files — all in this repo. Adding a new cryptid is three files and a pull
+      request.
+    </p>
+
+    <h2>Contribute</h2>
+    <p>
+      See <code>CONTRIBUTING.md</code> in the repository for the step-by-step
+      walkthrough. The short version: copy <code>_template.md</code>, draw a
+      polygon at <a href="https://geojson.io" rel="noopener">geojson.io</a>,
+      drop in a Wikimedia Commons image with credit, open a PR.
+    </p>
+
+    <h2>Sources & disclaimers</h2>
+    <p>
+      Every entry cites at least one source. We treat folklore as folklore —
+      this site documents what people have <em>said</em> about America's
+      supernatural geography, not what is empirically true. Indigenous
+      traditions are sketched lightly and with citations to Indigenous-led
+      writing where available; corrections are welcome.
+    </p>
+  </article>
+</BaseLayout>

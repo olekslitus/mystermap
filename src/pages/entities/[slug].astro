@@ -1,0 +1,205 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('entities', ({ data }) => !data.draft);
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const factionEntry = await getEntry(entry.data.faction);
+if (!factionEntry) throw new Error(`Missing faction "${entry.data.faction.id}" for entity "${entry.id}"`);
+const faction = factionEntry.data;
+const { Content } = await render(entry);
+
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+function resolveImage(src: string, slug: string): string {
+  if (src.startsWith('./')) {
+    const file = src.replace(/^\.\//, '').replace(new RegExp(`^${slug}/`), '');
+    return `${baseUrl}/entities/${slug}/${file}`;
+  }
+  if (src.startsWith('/')) return `${baseUrl}${src}`;
+  return src;
+}
+
+const yearLabel = entry.data.firstAppearanceFuzzy
+  ? `~${Math.floor(entry.data.firstAppearance / 10) * 10}s`
+  : `${entry.data.firstAppearance}`;
+
+const heroImage = entry.data.images[0];
+const galleryImages = entry.data.images.slice(1);
+const description = `${entry.data.name} — ${faction.name} sightings in ${entry.data.locations.join(', ')}.`;
+---
+<BaseLayout title={entry.data.name} description={description}>
+  <article class="page prose entity-page">
+    <a href={import.meta.env.BASE_URL} class="back-link">← back to map</a>
+
+    <header class="entity-header">
+      <span class="faction-badge" style={`--faction-color:${faction.color}`}>
+        <span class="icon">{faction.icon}</span>
+        {faction.name}
+      </span>
+      <h1>{entry.data.name}</h1>
+      <p class="muted entity-meta">
+        First seen <strong>{yearLabel}</strong> · {entry.data.locations.join(' · ')}
+      </p>
+    </header>
+
+    {heroImage && (
+      <figure class="entity-hero">
+        <img src={resolveImage(heroImage.src, entry.id)} alt={heroImage.alt} loading="eager" />
+        <figcaption class="muted">
+          {heroImage.credit}
+          {heroImage.creditUrl && (<> · <a href={heroImage.creditUrl} rel="noopener">source</a></>)}
+        </figcaption>
+      </figure>
+    )}
+
+    <Content />
+
+    {galleryImages.length > 0 && (
+      <section class="entity-gallery">
+        <h2>More images</h2>
+        <div class="gallery-grid">
+          {galleryImages.map((img) => (
+            <figure>
+              <img src={resolveImage(img.src, entry.id)} alt={img.alt} loading="lazy" />
+              <figcaption class="muted">
+                {img.credit}
+                {img.creditUrl && (<> · <a href={img.creditUrl} rel="noopener">source</a></>)}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {entry.data.sightings.length > 0 && (
+      <section class="entity-sightings">
+        <h2>Reported sightings</h2>
+        <ol class="sightings-list">
+          {entry.data.sightings
+            .slice()
+            .sort((a, b) => (a.year ?? 0) - (b.year ?? 0))
+            .map((s) => (
+              <li>
+                <div class="sighting-head">
+                  <span class="sighting-year">{s.year ?? s.date ?? '—'}</span>
+                  <span class="sighting-loc">{s.location}</span>
+                  <span class="sighting-type muted">{s.sourceType}</span>
+                </div>
+                <p>{s.description}</p>
+                <p class="muted small">
+                  <a href={s.sourceUrl} rel="noopener">{s.sourceTitle} →</a>
+                </p>
+              </li>
+            ))}
+        </ol>
+      </section>
+    )}
+
+    <section class="entity-sources">
+      <h2>Sources</h2>
+      <ul>
+        {entry.data.sources.map((s) => (
+          <li><a href={s.url} rel="noopener">{s.title}</a></li>
+        ))}
+      </ul>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    color: var(--fg-dim);
+    font-size: 0.9rem;
+  }
+  .entity-header {
+    margin-bottom: 1.5rem;
+  }
+  .faction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.2em 0.7em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--faction-color) 20%, transparent);
+    border: 1px solid var(--faction-color);
+    color: var(--fg);
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  .entity-meta {
+    margin-top: 0;
+  }
+  .entity-hero {
+    margin: 0 0 2rem;
+  }
+  .entity-hero img {
+    width: 100%;
+    max-height: 480px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: var(--bg-elev);
+  }
+  figcaption {
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+  }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .gallery-grid img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  .entity-sources ul {
+    padding-left: 1.2em;
+  }
+  .sightings-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+  }
+  .sightings-list li {
+    border-left: 2px solid var(--border);
+    padding: 0.5rem 0 0.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .sighting-head {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    margin-bottom: 0.3rem;
+  }
+  .sighting-year {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-weight: 600;
+    min-width: 4rem;
+  }
+  .sighting-loc {
+    color: var(--fg);
+    font-size: 0.95rem;
+  }
+  .sighting-type {
+    margin-left: auto;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.1em 0.5em;
+    border-radius: 4px;
+    background: var(--bg-elev);
+  }
+  .sightings-list p {
+    margin: 0.2rem 0;
+  }
+</style>

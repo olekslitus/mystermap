@@ -1,0 +1,77 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "dulce-base",
+        "firstYear": 1980,
+        "lastYear": null,
+        "note": "Alleged subterranean joint human-alien facility beneath the Archuleta Mesa near Dulce, New Mexico."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -106.7393,
+              36.93
+            ],
+            [
+              -106.7651,
+              37.0202
+            ],
+            [
+              -106.8549,
+              37.075
+            ],
+            [
+              -106.9518,
+              37.1157
+            ],
+            [
+              -107.0675,
+              37.1146
+            ],
+            [
+              -107.2075,
+              37.0912
+            ],
+            [
+              -107.2721,
+              36.9876
+            ],
+            [
+              -107.2021,
+              36.8862
+            ],
+            [
+              -107.1612,
+              36.8015
+            ],
+            [
+              -107.0821,
+              36.7146
+            ],
+            [
+              -106.955,
+              36.7654
+            ],
+            [
+              -106.8505,
+              36.7799
+            ],
+            [
+              -106.7448,
+              36.8313
+            ],
+            [
+              -106.7393,
+              36.93
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

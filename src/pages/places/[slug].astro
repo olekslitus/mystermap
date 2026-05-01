@@ -1,0 +1,118 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('places', ({ data }) => !data.draft);
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const PLACE_ICONS: Record<string, string> = {
+  mountain: '⛰️', church: '⛪', cemetery: '🪦', cave: '🕳️', site: '🗿',
+  vortex: '🌀', monument: '🗽', house: '🏚️', lighthouse: '🗼',
+  forest: '🌲', lake: '💧', other: '📍',
+};
+const icon = PLACE_ICONS[entry.data.type] ?? '📍';
+
+function resolveImage(src: string, slug: string): string {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  if (src.startsWith('./')) {
+    const file = src.replace(/^\.\//, '').replace(new RegExp(`^${slug}/`), '');
+    return `${base}/places/${slug}/${file}`;
+  }
+  if (src.startsWith('/')) return `${base}${src}`;
+  return src;
+}
+
+const heroImage = entry.data.images[0];
+---
+<BaseLayout title={entry.data.name} description={entry.data.significance}>
+  <article class="page prose place-page">
+    <a href={import.meta.env.BASE_URL} class="back-link">← back to map</a>
+
+    <header class="place-header">
+      <span class="place-badge">
+        <span class="icon">{icon}</span>
+        {entry.data.type}
+      </span>
+      <h1>{entry.data.name}</h1>
+      <p class="muted entity-meta">
+        {entry.data.locations.join(' · ')}
+        {entry.data.established !== null && (
+          <> · est. {entry.data.established < 0 ? `${Math.abs(entry.data.established)} BCE` : entry.data.established}</>
+        )}
+      </p>
+      <p class="significance">{entry.data.significance}</p>
+    </header>
+
+    {heroImage && (
+      <figure class="entity-hero">
+        <img src={resolveImage(heroImage.src, entry.id)} alt={heroImage.alt} loading="eager" />
+        <figcaption class="muted">
+          {heroImage.credit}
+          {heroImage.creditUrl && (<> · <a href={heroImage.creditUrl} rel="noopener">source</a></>)}
+        </figcaption>
+      </figure>
+    )}
+
+    <Content />
+
+    <section class="entity-sources">
+      <h2>Sources</h2>
+      <ul>
+        {entry.data.sources.map((s) => (
+          <li><a href={s.url} rel="noopener">{s.title}</a></li>
+        ))}
+      </ul>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    color: var(--fg-dim);
+    font-size: 0.9rem;
+  }
+  .place-header {
+    margin-bottom: 1.5rem;
+  }
+  .place-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.2em 0.7em;
+    border-radius: 999px;
+    background: rgba(212, 167, 58, 0.15);
+    border: 1px solid var(--accent);
+    color: var(--fg);
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+    text-transform: capitalize;
+  }
+  .significance {
+    font-style: italic;
+    color: var(--fg);
+    border-left: 2px solid var(--accent);
+    padding: 0.3rem 0 0.3rem 0.9rem;
+    margin: 1rem 0 0;
+  }
+  .entity-hero {
+    margin: 1.5rem 0 2rem;
+  }
+  .entity-hero img {
+    width: 100%;
+    max-height: 480px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  figcaption {
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+  }
+  .entity-sources ul { padding-left: 1.2em; }
+</style>

@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "fresno-nightcrawlers",
+        "firstYear": 2007,
+        "lastYear": null,
+        "note": "Pale, leg-like figures captured on home security camera in Fresno, California."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.6521,
+              36.74
+            ],
+            [
+              -119.6688,
+              36.7984
+            ],
+            [
+              -119.7267,
+              36.8239
+            ],
+            [
+              -119.78,
+              36.8257
+            ],
+            [
+              -119.8266,
+              36.8133
+            ],
+            [
+              -119.8724,
+              36.7885
+            ],
+            [
+              -119.9083,
+              36.74
+            ],
+            [
+              -119.8728,
+              36.6913
+            ],
+            [
+              -119.8455,
+              36.6369
+            ],
+            [
+              -119.78,
+              36.6459
+            ],
+            [
+              -119.717,
+              36.6407
+            ],
+            [
+              -119.6876,
+              36.6915
+            ],
+            [
+              -119.6521,
+              36.74
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

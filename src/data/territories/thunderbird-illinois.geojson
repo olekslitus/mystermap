@@ -1,0 +1,89 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "thunderbird-illinois",
+        "firstYear": 1948,
+        "lastYear": null,
+        "note": "Reports of giant raptor-like birds across the Mississippi bluffs near Alton and Lawndale, Illinois."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.4246,
+              39.9
+            ],
+            [
+              -89.4794,
+              40.1103
+            ],
+            [
+              -89.7588,
+              40.1792
+            ],
+            [
+              -89.925,
+              40.2457
+            ],
+            [
+              -90.1,
+              40.4209
+            ],
+            [
+              -90.3476,
+              40.389
+            ],
+            [
+              -90.5055,
+              40.2317
+            ],
+            [
+              -90.7258,
+              40.1121
+            ],
+            [
+              -90.723,
+              39.9
+            ],
+            [
+              -90.532,
+              39.7536
+            ],
+            [
+              -90.4929,
+              39.5786
+            ],
+            [
+              -90.2953,
+              39.5142
+            ],
+            [
+              -90.1,
+              39.5412
+            ],
+            [
+              -89.8425,
+              39.3914
+            ],
+            [
+              -89.7936,
+              39.6493
+            ],
+            [
+              -89.4949,
+              39.6949
+            ],
+            [
+              -89.4246,
+              39.9
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

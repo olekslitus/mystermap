@@ -1,0 +1,34 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "denver-airport",
+        "firstYear": 1995,
+        "lastYear": null,
+        "note": "Denver International Airport's 53-square-mile parcel, the largest airport footprint in North America, twenty-five miles northeast of downtown."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-104.7370, 39.8083],
+            [-104.6230, 39.8083],
+            [-104.6045, 39.8240],
+            [-104.5995, 39.8470],
+            [-104.6045, 39.8730],
+            [-104.6230, 39.8910],
+            [-104.6520, 39.9020],
+            [-104.6850, 39.9020],
+            [-104.7090, 39.8920],
+            [-104.7280, 39.8740],
+            [-104.7370, 39.8480],
+            [-104.7370, 39.8240],
+            [-104.7370, 39.8083]
+          ]
+        ]
+      }
+    }
+  ]
+}
