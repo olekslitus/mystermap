@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "selkie",
+        "note": "Orkney Islands, Scotland"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -3.55,
+              58.72
+            ],
+            [
+              -2.25,
+              58.72
+            ],
+            [
+              -2.25,
+              59.48
+            ],
+            [
+              -3.55,
+              59.48
+            ],
+            [
+              -3.55,
+              58.72
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

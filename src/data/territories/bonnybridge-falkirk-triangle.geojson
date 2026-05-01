@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "bonnybridge-falkirk-triangle",
+        "note": "Falkirk Triangle, Scotland"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.0,
+              55.92
+            ],
+            [
+              -3.15,
+              55.92
+            ],
+            [
+              -3.15,
+              56.12
+            ],
+            [
+              -4.0,
+              56.12
+            ],
+            [
+              -4.0,
+              55.92
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

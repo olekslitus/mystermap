@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "black-shuck",
+        "note": "East Anglia, England"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.35,
+              51.5
+            ],
+            [
+              1.75,
+              51.5
+            ],
+            [
+              1.82,
+              51.8
+            ],
+            [
+              1.82,
+              52.4
+            ],
+            [
+              1.8,
+              52.9
+            ],
+            [
+              1.0,
+              52.95
+            ],
+            [
+              0.35,
+              52.8
+            ],
+            [
+              0.1,
+              52.5
+            ],
+            [
+              0.35,
+              51.5
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

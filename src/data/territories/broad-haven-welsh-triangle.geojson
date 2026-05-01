@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "entity": "broad-haven-welsh-triangle",
+        "note": "Pembrokeshire Welsh Triangle"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.35,
+              51.68
+            ],
+            [
+              -4.7,
+              51.68
+            ],
+            [
+              -4.7,
+              51.9
+            ],
+            [
+              -5.35,
+              51.9
+            ],
+            [
+              -5.35,
+              51.68
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
